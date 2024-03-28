@@ -63,3 +63,8 @@ class LogoutView(APIView):
         response.delete_cookie('X-Token')
         response.data = {'message': 'Success'}
         return response
+
+
+class UserView(APIView):
+    def get(self, request):
+        return Response(User.objects.all().first().profile.bio)

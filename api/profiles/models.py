@@ -8,5 +8,3 @@ class Profile(BaseModel):
     location = models.CharField(max_length=255, blank=True)
     birth_date = models.DateField(null=True, blank=True)
     avatar = models.ImageField(upload_to='avatars/', default='avatars/default.png')
-    first_name = models.CharField(max_length=255, blank=True)
-    last_name = models.CharField(max_length=255, blank=True)

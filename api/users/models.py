@@ -6,6 +6,8 @@ from common.models import BaseModel
 class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=255, unique=True)
     email = models.EmailField(max_length=255, unique=True)
+    first_name = models.CharField(max_length=255, blank=True)
+    last_name = models.CharField(max_length=255, blank=True)
     password = models.CharField(max_length=255)
 
     objects = UserManager()
