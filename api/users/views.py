@@ -1,70 +1,80 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import UserSerializer
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import User
-import jwt
-from datetime import datetime, timedelta, timezone
+from .permissions import IsAuthenticatedUser
+from .utils import username_generator
+
 
 class RegisterView(APIView):
+    """Creating user accounts with thier profile object using signals."""
+    permission_classes = [AllowAny]
     def post(self, request):
+        """Creates a new user account."""
+        if not request.data.get('username') and request.data.get('email'): # if username is not provided
+            request.data['username'] = username_generator(request.data['email']) # generate a username
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        return Response(serializer.data, 201)
+
+
+class UserView(APIView):
+    """Base class for user views."""
+    permission_classes = [IsAuthenticatedUser]
+
+    def get(self, request):
+        """Get the user object."""
+        user = request.user
+        serializer = UserSerializer(user)
         return Response(serializer.data)
 
+    def put(self, request):
+        """Update the user object."""
+        user = request.user
+        
+        if not user.check_password(request.data.get('password')): # if the password is incorrect
+            return Response({'Authorization': 'Failed'}, status=400)
+        
+        if not request.data.get('username') and request.data.get('email'): # if username is not provided
+            request.data['username'] = user.username # use the existing username
+        
+        if not request.data.get('email'): # if email is not provided
+            request.data['email'] = user.email # use the existing email
+        
+        if request.data.get('new_password'): # if new password is provided
+            request.data['password'] = request.data['new_password'] # use the new password
+            request.data.pop('new_password') # remove the new password from the request data
+        
+        serializer = UserSerializer(user, data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=202)
+        return Response(serializer.errors, status=400)
 
-class LoginView(APIView):
-    def post(self, request):
-        username = request.data.get('username')
-        email = request.data.get('email')
-        password = request.data.get('password')
-
-        user = User.objects.filter(username=username).first() or User.objects.filter(email=email).first()
-
-        if user is None:
-            return Response({'error': 'Invalid username or email'})
-
-        if not user.check_password(password):
-            return Response({'error': 'Invalid password'})
-
-        response = Response()
-        payload = {
-            'id': str(user.id),
-            'exp': datetime.now(tz=timezone.utc) + timedelta(minutes=60),
-            'iat': datetime.now(tz=timezone.utc)
-        }
-        user = UserSerializer(user).data
-        token = jwt.encode(payload, 'secret', algorithm='HS256')
-        response.set_cookie(key='X-Token', value=token, httponly=True)
-        response.data = user
-        response.status_code = 200
-        return response
+    def delete(self, request):
+        """Delete the user object."""
+        user = request.user
+        
+        if not user.check_password(request.data.get('password')):
+            return Response({'Authorization': 'Failed'}, status=400)
+        
+        user.delete()
+        return Response(status=204)
 
 
-class UserView(APIView):
+class GetEmailView(APIView):
+    """Allow users to login with their email address."""
+    permission_classes = [AllowAny]
+
+    def get_object(self, request):
+        """used to retrieve the user object."""
+        email = request.data.get('username')
+        return User.objects.get(email=email)
+
     def get(self, request):
-        token = request.COOKIES.get('X-Token')
-        if not token:
-            return Response({'error': 'Token is missing'}, status=401)
-        try:
-            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
-        except jwt.ExpiredSignatureError:
-            return Response({'error': 'Token is expired'}, status=401)
-        except jwt.InvalidTokenError:
-            return Response({'error': 'Token is invalid'}, status=401)
-        user = User.objects.get(id=payload['id'])
-        user = UserSerializer(user).data
-        return Response(user)
-
-
-class LogoutView(APIView):
-    def post(self, request):
-        response = Response()
-        response.delete_cookie('X-Token')
-        response.data = {'message': 'Success'}
-        return response
-
-
-class UserView(APIView):
-    def get(self, request):
-        return Response(User.objects.all().first().profile.bio)
+        """Return the email of the user for the given username."""
+        user = self.get_object(request=request)
+        return Response(user.email, status=200)
