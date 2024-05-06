@@ -1,0 +1,12 @@
+{
+  "files": {
+    "main.css": "/Thoghts/frontend/static/css/main.31d6cfe0.css",
+    "main.js": "/Thoghts/frontend/static/js/main.2ef1f68f.js",
+    "index.html": "/Thoghts/frontend/index.html",
+    "main.2ef1f68f.js.map": "/Thoghts/frontend/static/js/main.2ef1f68f.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.31d6cfe0.css",
+    "static/js/main.2ef1f68f.js"
+  ]
+}
