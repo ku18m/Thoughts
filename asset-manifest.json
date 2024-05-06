@@ -1,12 +1,12 @@
 {
   "files": {
     "main.css": "/Thoghts/static/css/main.31d6cfe0.css",
-    "main.js": "/Thoghts/static/js/main.b8702937.js",
+    "main.js": "/Thoghts/static/js/main.5e91be00.js",
     "index.html": "/Thoghts/index.html",
-    "main.b8702937.js.map": "/Thoghts/static/js/main.b8702937.js.map"
+    "main.5e91be00.js.map": "/Thoghts/static/js/main.5e91be00.js.map"
   },
   "entrypoints": [
     "static/css/main.31d6cfe0.css",
-    "static/js/main.b8702937.js"
+    "static/js/main.5e91be00.js"
   ]
 }
